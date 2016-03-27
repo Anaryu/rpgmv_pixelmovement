@@ -9,8 +9,8 @@
  * @help This plugin does not provide plugin commands.
 
  * @param Step Size
- * @desc How big the player step is, 1 is the full tile, 0.1 would be 1/10 of a tile.
- * @default 0.5
+ * @desc How many pixels each 'step' is.
+ * @default 6 
  */
 
 (function() {
@@ -19,104 +19,117 @@
   var parameters = PluginManager.parameters("PixelMovement");
 
   // Default set up (get the default value if one isn't set when we read in parameters)
-  var step_size = Number(parameters['Step Size'] || 0.5);
+  var step_size = Number(parameters['Step Size'] || 6);
 
-  var _Game_CharacterBase_canPass = Game_Player.prototype.canPass;
+  // Supporting functions
+  var isInt = function(n) { return parseInt(n) === n; };
+  var stepX = function() { return (step_size / $gameMap.tileWidth()); };
+  var stepY = function() { return (step_size / $gameMap.tileHeight()); };
+
+  // Create new canPass function check
+  var _Game_CharacterBase_canPass = Game_CharacterBase.prototype.canPass;
   Game_Player.prototype.canPass = function(x, y, d) 
-  {
-    $gameMap.getNewGridLocation(x, y, d);
-    return true;
-    //return _Game_CharacterBase_canPass.call(this, x2, y2, d);
-  };
-
-  Game_Map.prototype.getNewGridLocation = function(x, y, d)
   {
     // Set vars for our new x/y coordinate
     var x2 = x;
+    var x3 = x;
     var y2 = y;
-    var c1True = false;
-    var c2True = false;
+    var y3 = y;
+    var c1 = false;
+    var c2 = false;
 
-    // If it's left or right, update the x
-    if (d === 4)
-    {
-      if ((x - step_size) < Math.floor(x))
+    // If our y value isn't an integer, we're standing on 'two' squares
+    var secondXCheck = !isInt(x);
+    var secondYCheck = !isInt(y);
+    var xCheck = 0;
+    var yCheck = 0;
+    if (d === 4) 
+    { 
+      xCheck = Math.floor(x);
+      // If we're changing tiles, check collision and validity and passability
+      if ((x - stepX()) < xCheck)
       {
-        console.log(" -- Changing Square: " + (x-step_size) + " < " + Math.floor(x) + " (" + x + ")");
-      }
-      else
-      {
-        console.log("Not changing square");
+        // X value is the same for both points we need to potentially check
+        x2 = xCheck;
+        x3 = xCheck;
+        y2 = Math.floor(y);
+        if (secondYCheck) { y3 = Math.ceil(y); }
       }
     }
     else if (d === 6)
-    {
-      console.log("Left/Right: " + x);
+    { 
+      xCheck = Math.ceil(x);
+      // If we're changing tiles, check collision and validity and passability
+      if ((x + stepX()) > xCheck)
+      {
+        // X value is the same for both points we need to potentially check
+        x2 = xCheck;
+        x3 = xCheck;
+        y2 = Math.floor(y);
+        if (secondYCheck) { y3 = Math.ceil(y); }
+      }
     }
     else if (d === 2)
-    {
-      console.log("Up/Down: " + y);
+    { 
+      yCheck = Math.floor(y);
+      // If we're changing tiles, check collision and validity and passability
+      if ((y - stepY()) < yCheck)
+      {
+        // X value is the same for both points we need to potentially check
+        y2 = yCheck;
+        y3 = yCheck;
+        x2 = Math.floor(x);
+        if (secondXCheck) { x3 = Math.ceil(x); }
+      }
     }
     else if (d === 8)
-    {
-
+    { 
+      yCheck = Math.ceil(y);
+      // If we're changing tiles, check collision and validity and passability
+      if ((y + stepY()) > yCheck)
+      {
+        // X value is the same for both points we need to potentially check
+        y2 = yCheck;
+        y3 = yCheck;
+        x2 = Math.floor(x);
+        if (secondXCheck) { x3 = Math.ceil(x); }
+      }
     }
-    //return this.roundX(x + (d === 6 ? 0.5 : d === 4 ? -0.5 : 0));
+
+    // Check both potential points
+    c1 = _Game_CharacterBase_canPass.call(this, x2, y2, d);
+    c2 = _Game_CharacterBase_canPass.call(this, x3, y3, d);
+    console.log(x3 + "," + y3 + ": " + c1);
+    console.log(x3 + "," + y3 + ": " + c2);
+
+    // Return if both points are valid
+    return (c1 && c2);
   };
 
-  /*
-  Game_CharacterBase.prototype.canPass = function(x, y, d) {
-    var x2 = $gameMap.roundXWithDirection(x, d);
-    var y2 = $gameMap.roundYWithDirection(y, d);
-    if (!$gameMap.isValid(x2, y2)) {
-        return false;
-    }
-    if (this.isThrough() || this.isDebugThrough()) {
-        return true;
-    }
-    if (!this.isMapPassable(x, y, d)) {
-        return false;
-    }
-    if (this.isCollidedWithCharacters(x2, y2)) {
-        return false;
-    }
-    return true;
-};
-*/
+  var _Game_Map_checkPassage = Game_Map.prototype.checkPassage;
+  Game_Map.prototype.checkPassage = function(x, y, bit)
+  {
+    var c1 = _Game_Map_checkPassage.call(this, Math.floor(x), Math.floor(y), bit);
+    var c2 = _Game_Map_checkPassage.call(this, Math.ceil(x), Math.ceil(y), bit);
+    var c3 = _Game_Map_checkPassage.call(this, Math.floor(x), Math.ceil(y), bit);
+    var c4 = _Game_Map_checkPassage.call(this, Math.ceil(x), Math.floor(y), bit);
+    return (c1 && c2 && c3 && c4);
+  };
 
-/*
-Game_Map.prototype.isValid = function(x, y) {
-    return x >= 0 && x < this.width() && y >= 0 && y < this.height();
-};
-
-Game_Map.prototype.isPassable = function(x, y, d) {
-    return this.checkPassage(x, y, (1 << (d / 2 - 1)) & 0x0f);
-};
-
-Game_Map.prototype.checkPassage = function(x, y, bit) {
-    var flags = this.tilesetFlags();
-    var tiles = this.allTiles(x, y);
-    for (var i = 0; i < tiles.length; i++) {
-        var flag = flags[tiles[i]];
-        if ((flag & 0x10) !== 0)  // [*] No effect on passage
-            continue;
-        if ((flag & bit) === 0)   // [o] Passable
-            return true;
-        if ((flag & bit) === bit) // [x] Impassable
-            return false;
-    }
-    return false;
-};
-*/
-
-  // Check if a new location and starting direction are valid for pass-through
+  // Update the movement amount for simple x direction checks
+  var _Game_Map_xWithDirection = Game_Map.prototype.xWithDirection;
+  Game_Map.prototype.xWithDirection = function(x, d)
+  { return x + (d === 6 ? stepX() : d === 4 ? -stepX() : 0); };
+  var _Game_Map_yWithDirection = Game_Map.prototype.yWithDirection;
+  Game_Map.prototype.yWithDirection = function(x, d)
+  { return x + (d === 2 ? stepY() : d === 8 ? -stepY() : 0); };
 
   // Update the movement amount
   var _Game_Map_roundXWithDirection = Game_Map.prototype.roundXWithDirection;
   Game_Map.prototype.roundXWithDirection = function(x, d) 
-  {
-    return this.roundX(x + (d === 6 ? step_size : d === 4 ? -step_size : 0));
-    //return _Game_Map_roundXWithDirection.call(this, x, d);
-  };
+  { return this.roundX(x + (d === 6 ? stepX() : d === 4 ? -stepX() : 0)); };
+  var _Game_Map_roundYWithDirection = Game_Map.prototype.roundYWithDirection;
+  Game_Map.prototype.roundYWithDirection = function(y, d) 
+  { return this.roundY(y + (d === 2 ? stepY() : d === 8 ? -stepY() : 0)); };
 
 })();
