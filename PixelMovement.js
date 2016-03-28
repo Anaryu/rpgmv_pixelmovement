@@ -121,7 +121,7 @@
 
   // Create new canPass function check
   var _Game_CharacterBase_canPass = Game_CharacterBase.prototype.canPass;
-  Game_Player.prototype.canPass = function(x, y, d) 
+  Game_CharacterBase.prototype.canPass = function(x, y, d) 
   {
     // Get the 'moved' point after our move value is applied to our current location
     var nPoint = this.getMovedPoint(x, y, d);
@@ -168,5 +168,16 @@
   var _Game_Map_roundYWithDirection = Game_Map.prototype.roundYWithDirection;
   Game_Map.prototype.roundYWithDirection = function(y, d) 
   { return this.roundY(y + (d === 2 ? stepY() : d === 8 ? -stepY() : 0)); };
+
+  // *** Handling Animation Updates *** //
+  
+  // Account for small pixel movement and slower general movement for animations
+  var _Game_CharacterBase_updateAnimationCount = Game_CharacterBase.prototype.updateAnimationCount;
+  Game_CharacterBase.prototype.updateAnimationCount = function()
+  {
+    // Update our animation count if we haven't been stopped, since pixel movement can be slow
+    if (this._stopCount < 15) { this._animationCount += 0.5; }
+    _Game_CharacterBase_updateAnimationCount.call(this);
+  };
 
 })();
