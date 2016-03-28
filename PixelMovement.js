@@ -170,7 +170,7 @@
   { return this.roundY(y + (d === 2 ? stepY() : d === 8 ? -stepY() : 0)); };
 
   // *** Handling Animation Updates *** //
-  
+
   // Account for small pixel movement and slower general movement for animations
   var _Game_CharacterBase_updateAnimationCount = Game_CharacterBase.prototype.updateAnimationCount;
   Game_CharacterBase.prototype.updateAnimationCount = function()
@@ -179,5 +179,24 @@
     if (this._stopCount < 15) { this._animationCount += 0.5; }
     _Game_CharacterBase_updateAnimationCount.call(this);
   };
+
+  // *** Position checking function updates *** //
+  /*
+  Game_CharacterBase.prototype.isOnLadder = function() {
+    return $gameMap.isLadder(this._x, this._y);
+  };
+
+  Game_CharacterBase.prototype.isOnBush = function() {
+      return $gameMap.isBush(this._x, this._y);
+  };
+
+  Game_CharacterBase.prototype.terrainTag = function() {
+      return $gameMap.terrainTag(this._x, this._y);
+  };
+
+  Game_CharacterBase.prototype.regionId = function() {
+      return $gameMap.regionId(this._x, this._y);
+  };
+  */
 
 })();
