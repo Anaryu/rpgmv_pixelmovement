@@ -65,6 +65,38 @@
     return point;
   }
 
+  // Get all the files the player exists in
+  Game_CharacterBase.prototype.getTiles = function(x, y)
+  {
+    // Declare our array to hold the points
+    var points = new Array();
+    var pointsString = new Array();
+    var string = "";
+
+    // Get all 4 of the points
+    x1 = Math.floor(x + this.colliderDiff(4));
+    x2 = Math.floor(x + 1 - this.colliderDiff(4));
+    y1 = Math.floor(y + (1.5 * this.colliderDiff(2)));
+    y2 = Math.floor(y + 1 - (0.5 * this.colliderDiff(2)));
+
+    // Create the 4 valid points and add if a matching one doesn't exist
+      // Point 1
+    points.push([x1,y1]);
+    pointsString.push(x1+"-"+y1);
+      // Point 2
+    string = x1+"-"+y2;
+    if (!pointsString.includes(string)) { points.push(new Array(x1,y2)); pointsString.push(string); }
+      // Point 3
+    string = x2+"-"+y1;
+    if (!pointsString.includes(string)) { points.push(new Array(x2,y1)); pointsString.push(string); }
+      // Point 4
+    string = x2+"-"+y2;
+    if (!pointsString.includes(string)) { points.push(new Array(x2,y2)); }
+
+    // Return the points
+    return points;
+  };
+
   // Get the first tile the character is in
   Game_CharacterBase.prototype.getEnteringTiles = function(x, y, d)
   {
@@ -181,13 +213,24 @@
   };
 
   // *** Position checking function updates *** //
-  /*
-  Game_CharacterBase.prototype.isOnLadder = function() {
-    return $gameMap.isLadder(this._x, this._y);
+  Game_CharacterBase.prototype.isOnLadder = function() 
+  {
+    // Get the tiles we're included in
+    var points = this.getTiles(this._x, this._y);
+    // For each tile, if it's a bush, our check is true
+    for (var i = 0; i < points.length; i++) { if ($gameMap.isLadder(points[i][0], points[i][1])) { return true; } }
+    // If we get here, we're not in a bush
+    return false;
   };
 
-  Game_CharacterBase.prototype.isOnBush = function() {
-      return $gameMap.isBush(this._x, this._y);
+  Game_CharacterBase.prototype.isOnBush = function() 
+  {
+    // Get the tiles we're included in
+    var points = this.getTiles(this._x, this._y);
+    // For each tile, if it's a bush, our check is true
+    for (var i = 0; i < points.length; i++) { if ($gameMap.isBush(points[i][0], points[i][1])) { return true; } }
+    // If we get here, we're not in a bush
+    return false;
   };
 
   Game_CharacterBase.prototype.terrainTag = function() {
@@ -197,6 +240,36 @@
   Game_CharacterBase.prototype.regionId = function() {
       return $gameMap.regionId(this._x, this._y);
   };
-  */
 
+  // Array Includes function
+  if (!Array.prototype.includes) {
+    Array.prototype.includes = function(searchElement /*, fromIndex*/ ) 
+    {
+      'use strict';
+      var O = Object(this);
+      var len = parseInt(O.length) || 0;
+      if (len === 0) {
+        return false;
+      }
+      var n = parseInt(arguments[1]) || 0;
+      var k;
+      if (n >= 0) {
+        k = n;
+      } else {
+        k = len + n;
+        if (k < 0) {k = 0;}
+      }
+      var currentElement;
+      while (k < len) {
+        currentElement = O[k];
+        if (searchElement === currentElement ||
+           (searchElement !== searchElement && currentElement !== currentElement)) { // NaN !== NaN
+          return true;
+        }
+        k++;
+      }
+      return false;
+    };
+  }
+  
 })();
