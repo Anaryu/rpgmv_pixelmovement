@@ -241,11 +241,21 @@
 		return $gameMap.regionId(this._x, this._y);
 	};
 
-	Game_CharacterBase.prototype.pos = function(x, y) {
-		return this._x === x && this._y === y;
+	Game_CharacterBase.prototype.pos = function(x, y) 
+	{
+		// Get the tiles we're included in
+		/*
+		var points = this.getTiles(x, y);
+		// For each tile, if it's a bush, our check is true
+		for (var i = 0; i < points.length; i++) 
+		{ 
+			if(this._x === x && this._y === y;
+		}
+		*/
 	};
 
-	Game_CharacterBase.prototype.posNt = function(x, y) {
+	Game_CharacterBase.prototype.posNt = function(x, y) 
+	{
 		// No through
 		return this.pos(x, y) && !this.isThrough();
 	};
