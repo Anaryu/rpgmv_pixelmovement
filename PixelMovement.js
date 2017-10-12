@@ -63,7 +63,7 @@
 
 		// Return calculated point
 		return point;
-	}
+	};
 
 	// Get all the files the player exists in
 	Game_CharacterBase.prototype.getTiles = function(x, y)
